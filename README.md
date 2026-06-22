@@ -1,59 +1,112 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel RabbitMQ Learning Lab
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Project Description
 
-## About Laravel
+This is a small Laravel backend project built to understand RabbitMQ in a real workflow.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+The project focuses on one idea:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Laravel should not execute heavy work inside the HTTP request.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Instead, Laravel creates a record, sends a job to RabbitMQ, and lets a worker process it in the background.
 
-## Learning Laravel
+## Main Goal
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+It is a focused backend lab for understanding:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- Message queues
+- Background jobs
+- Workers
+- Retry behavior
+- Failed job handling
+- RabbitMQ dashboard monitoring
 
-## Laravel Sponsors
+## Project Flow
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+The project follows this flow:
 
-### Premium Partners
+1. The user creates a report from a Laravel route.
+2. Laravel saves the report in the database with a pending status.
+3. Laravel dispatches a job to RabbitMQ.
+4. RabbitMQ stores the message in the reports queue.
+5. The Laravel worker consumes the job from RabbitMQ.
+6. The worker processes the report.
+7. The report status changes to completed or failed.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Main Components
 
-## Contributing
+### Laravel
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Laravel handles the request, creates the report record, dispatches the job, and updates the database.
 
-## Code of Conduct
+### RabbitMQ
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+RabbitMQ works as the message broker.
 
-## Security Vulnerabilities
+It holds the job message until a worker consumes it.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+RabbitMQ does not execute the job itself.
 
-## License
+### Worker
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The Laravel queue worker consumes messages from RabbitMQ and runs the job logic.
+
+### Database
+
+The database stores the report data and tracks the current processing status.
+
+## Implemented Features
+
+- RabbitMQ running through Docker
+- RabbitMQ Management Dashboard enabled
+- Laravel connected to RabbitMQ
+- Dedicated reports queue
+- Report model and database table
+- Background job for report generation
+- Successful job processing
+- Failed job simulation
+- Retry behavior with backoff
+- Delay queue behavior
+- Final failed status handling
+
+## Success Scenario
+
+A normal report is created with pending status.
+
+The job is sent to RabbitMQ.
+
+The worker consumes the job.
+
+The report is processed.
+
+The final status becomes completed.
+
+## Failure Scenario
+
+A failing report is created with pending status.
+
+The job is sent to RabbitMQ.
+
+The worker tries to process it.
+
+The job fails intentionally.
+
+Laravel retries the job several times.
+
+RabbitMQ creates a temporary delay queue during the backoff period.
+
+After all retries fail, the report status becomes failed.
+
+
+## Key RabbitMQ Concepts Covered
+
+- Queue
+- Producer
+- Consumer
+- Worker
+- Message
+- Acknowledgment
+- Retry
+- Backoff
+- Delay queue
+- Failed job
